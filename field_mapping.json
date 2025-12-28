@@ -1,0 +1,376 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Master field mapping for Treasury Package automation",
+    "created": "2025-12-28"
+  },
+  "customer_fields": {
+    "personal_info": {
+      "full_name_upper": {
+        "label": "Full Legal Name (ALL CAPS)",
+        "placeholder": "THOMAS KALLEN CLAYCOMB",
+        "example": "JOHN DOE SMITH",
+        "type": "text",
+        "required": true,
+        "description": "Your full legal name as it appears on birth certificate, in ALL CAPITAL LETTERS",
+        "documents": ["ALL"]
+      },
+      "full_name_styled": {
+        "label": "Full Name (Styled Format)",
+        "placeholder": "Thomas-Kallen: Claycomb",
+        "example": "John-Doe: Smith",
+        "type": "text",
+        "required": true,
+        "description": "Your name in styled format with hyphen between first/middle and colon before last name",
+        "auto_derive": "from full_name_upper",
+        "documents": ["ALL"]
+      },
+      "first_name": {
+        "label": "First Name",
+        "type": "text",
+        "required": true
+      },
+      "middle_name": {
+        "label": "Middle Name",
+        "type": "text",
+        "required": false
+      },
+      "last_name": {
+        "label": "Last Name",
+        "type": "text",
+        "required": true
+      },
+      "ssn": {
+        "label": "Social Security Number",
+        "placeholder": "XXX-XX-XXXX",
+        "example": "493-74-8357",
+        "type": "ssn",
+        "required": true,
+        "sensitive": true,
+        "description": "Your 9-digit Social Security Number",
+        "documents": ["ALL"]
+      },
+      "ssn_no_dashes": {
+        "label": "SSN (No Dashes)",
+        "auto_derive": "from ssn",
+        "example": "493748357",
+        "documents": ["14_CHARGEBACK", "20_ACTUAL_CONSTRUCTIVE", "21_BILL_OF_EXCHANGE"]
+      },
+      "birth_date": {
+        "label": "Date of Birth",
+        "type": "date",
+        "required": true,
+        "description": "Your date of birth"
+      },
+      "birth_date_formatted": {
+        "label": "Birth Date (Written)",
+        "example": "October 12th 1962",
+        "auto_derive": "from birth_date"
+      },
+      "birth_state": {
+        "label": "State of Birth",
+        "type": "state_select",
+        "required": true
+      },
+      "birth_certificate_number": {
+        "label": "Birth Certificate File Number",
+        "placeholder": "XXX-XX-XXXXXX",
+        "example": "124-62-071026",
+        "type": "text",
+        "required": true
+      }
+    },
+    "address_info": {
+      "street_address": {
+        "label": "Street Address",
+        "placeholder": "6316 East 113th Avenue",
+        "type": "text",
+        "required": true
+      },
+      "street_address_upper": {
+        "label": "Street Address (CAPS)",
+        "auto_derive": "from street_address",
+        "example": "6316 EAST 113TH AVENUE"
+      },
+      "city": {
+        "label": "City",
+        "placeholder": "Temple Terrace",
+        "type": "text",
+        "required": true
+      },
+      "city_upper": {
+        "label": "City (CAPS)",
+        "auto_derive": "from city"
+      },
+      "state": {
+        "label": "State",
+        "placeholder": "Florida",
+        "type": "state_select",
+        "required": true
+      },
+      "state_upper": {
+        "label": "State (CAPS)",
+        "auto_derive": "from state"
+      },
+      "zip_code": {
+        "label": "ZIP Code",
+        "placeholder": "33617",
+        "type": "zip",
+        "required": true
+      },
+      "county": {
+        "label": "County",
+        "placeholder": "Hillsborough",
+        "type": "text",
+        "required": true
+      },
+      "county_upper": {
+        "label": "County (CAPS)",
+        "auto_derive": "from county"
+      }
+    },
+    "ucc_info": {
+      "ucc_filing_number": {
+        "label": "UCC-1 Filing Number",
+        "placeholder": "XXXXXXXXXXXXX",
+        "type": "text",
+        "required": true,
+        "description": "Your UCC-1 filing number from Secretary of State"
+      },
+      "ucc_filing_state": {
+        "label": "UCC Filing State",
+        "placeholder": "New York",
+        "type": "state_select",
+        "required": true
+      },
+      "registered_mail_number": {
+        "label": "Registered Mail Tracking Number",
+        "placeholder": "RF737860948US",
+        "type": "text",
+        "required": true,
+        "description": "USPS Registered Mail number for Treasury mailing"
+      }
+    },
+    "financial_info": {
+      "dtc_routing_number": {
+        "label": "DTC Routing Number",
+        "placeholder": "0810-0004-5",
+        "type": "text",
+        "required": true
+      },
+      "dtc_account_number": {
+        "label": "DTC Account Number",
+        "placeholder": "053045139",
+        "type": "text",
+        "required": true
+      },
+      "lien_amount": {
+        "label": "Security Agreement Lien Amount",
+        "default": "$100,000,000.00",
+        "type": "currency",
+        "required": true
+      },
+      "lien_amount_words": {
+        "label": "Lien Amount (Words)",
+        "default": "ONE HUNDRED MILLION",
+        "auto_derive": "from lien_amount"
+      }
+    },
+    "dates": {
+      "document_date": {
+        "label": "Document Date",
+        "type": "date",
+        "required": true,
+        "description": "Date documents are being executed"
+      },
+      "document_date_formatted": {
+        "label": "Document Date (Written)",
+        "example": "April 7, 2025",
+        "auto_derive": "from document_date"
+      },
+      "notary_date": {
+        "label": "Notarization Date",
+        "type": "date",
+        "required": false,
+        "description": "Leave blank if not yet notarized"
+      }
+    },
+    "notary_info": {
+      "notary_name": {
+        "label": "Notary Name",
+        "type": "text",
+        "required": false,
+        "description": "Leave blank - to be filled by notary"
+      },
+      "notary_commission_expires": {
+        "label": "Notary Commission Expiration",
+        "type": "date",
+        "required": false
+      }
+    }
+  },
+  "static_fields": {
+    "treasury_secretary": {
+      "value": "SCOTT BESSENT",
+      "description": "Current Treasury Secretary - may need periodic update"
+    },
+    "treasury_address": {
+      "value": "1500 PENNSYLVANIA AVENUE N.W., WASHINGTON, D.C. 20220"
+    },
+    "irs_austin_address": {
+      "value": "Internal Revenue Service Center, Austin, TX 73301-0010"
+    }
+  },
+  "document_mapping": {
+    "1_AFFIDAVIT_OF_NOTARY_PRESENTMENT": {
+      "fields": [
+        "state", "county", "document_date", "full_name_styled", 
+        "registered_mail_number", "treasury_secretary", "treasury_address",
+        "ucc_filing_number", "notary_name", "notary_date"
+      ]
+    },
+    "2_RECORDING_COVER_SHEET": {
+      "fields": [
+        "full_name_styled", "street_address", "city", "state", "zip_code"
+      ]
+    },
+    "2A_PRE_SET_NOTICE": {
+      "fields": [
+        "registered_mail_number", "treasury_secretary", "full_name_styled",
+        "ucc_filing_number", "ucc_filing_state", "street_address", "city",
+        "state", "dtc_routing_number", "dtc_account_number", "ssn",
+        "document_date", "full_name_upper"
+      ]
+    },
+    "3_AFFIDAVIT_OF_POLITICAL_STATUS": {
+      "fields": [
+        "full_name_styled", "street_address", "city", "state", "zip_code",
+        "document_date", "full_name_upper", "ssn", "ucc_filing_number",
+        "lien_amount", "county", "notary_name", "notary_date"
+      ]
+    },
+    "5_POWER_OF_ATTORNEY": {
+      "fields": [
+        "full_name_upper", "street_address_upper", "city_upper", "state_upper",
+        "zip_code", "full_name_styled", "document_date", "notary_name",
+        "notary_date", "county"
+      ]
+    },
+    "6_SECURITY_AGREEMENT": {
+      "fields": [
+        "document_date", "full_name_upper", "ssn", "full_name_styled",
+        "street_address", "city", "state", "zip_code", "lien_amount",
+        "birth_certificate_number", "birth_state", "county", "notary_name",
+        "notary_date"
+      ]
+    },
+    "6A_ATTACHMENT_A_PROPERTY_LIST": {
+      "fields": [
+        "full_name_upper", "full_name_styled", "ssn", "birth_certificate_number"
+      ]
+    },
+    "7_INDEMNITY_BOND_LIEN": {
+      "fields": [
+        "full_name_upper", "full_name_styled", "lien_amount", "document_date"
+      ]
+    },
+    "8_HOLD_HARMLESS_INDEMNITY": {
+      "fields": [
+        "full_name_upper", "street_address_upper", "city_upper", "state_upper",
+        "zip_code", "full_name_styled", "street_address", "city", "state",
+        "ssn", "document_date"
+      ]
+    },
+    "9_COPYRIGHT_AFFIDAVIT": {
+      "fields": [
+        "full_name_upper", "full_name_styled", "birth_date_formatted",
+        "birth_state", "county", "document_date", "notary_name", "notary_date"
+      ]
+    },
+    "10_COMMON_LAW_COPYRIGHT": {
+      "fields": [
+        "full_name_upper", "full_name_styled", "birth_date_formatted",
+        "county", "state", "notary_name", "notary_date"
+      ]
+    },
+    "13_ACT_OF_EXPATRIATION": {
+      "fields": [
+        "full_name_upper", "full_name_styled", "birth_state", "state",
+        "street_address", "city", "county", "notary_name", "notary_date"
+      ]
+    },
+    "14_CHARGEBACK_ORDER": {
+      "fields": [
+        "document_date", "treasury_secretary", "registered_mail_number",
+        "ssn_no_dashes", "full_name_styled", "dtc_routing_number",
+        "dtc_account_number", "street_address", "city", "state", "zip_code"
+      ]
+    },
+    "15_INTERNATIONAL_TRACKING": {
+      "fields": [
+        "registered_mail_number", "ucc_filing_number", "full_name_styled",
+        "full_name_upper", "street_address", "city", "state", "zip_code",
+        "county", "document_date", "notary_name", "notary_date"
+      ]
+    },
+    "16_APPOINTMENT_FIDUCIARY": {
+      "fields": [
+        "full_name_styled", "registered_mail_number", "street_address",
+        "city", "state", "zip_code", "ssn", "full_name_upper",
+        "treasury_secretary", "document_date"
+      ]
+    },
+    "17_PRIVATE_BANKERS_ACCEPTANCE": {
+      "fields": [
+        "full_name_upper", "full_name_styled", "street_address", "city",
+        "state", "zip_code", "ssn", "document_date", "notary_name", "notary_date"
+      ]
+    },
+    "20_ACTUAL_CONSTRUCTIVE_NOTICE": {
+      "fields": [
+        "full_name_styled", "ssn_no_dashes", "registered_mail_number",
+        "lien_amount", "street_address", "city", "state", "zip_code",
+        "document_date"
+      ]
+    },
+    "21_BILL_OF_EXCHANGE": {
+      "fields": [
+        "document_date", "registered_mail_number", "treasury_secretary",
+        "full_name_styled", "ssn_no_dashes", "street_address", "city",
+        "state", "zip_code", "lien_amount"
+      ]
+    }
+  },
+  "questionnaire_sections": [
+    {
+      "id": "personal",
+      "title": "Personal Information",
+      "description": "Your legal identity information",
+      "fields": ["first_name", "middle_name", "last_name", "ssn", "birth_date", "birth_state", "birth_certificate_number"]
+    },
+    {
+      "id": "address",
+      "title": "Address Information",
+      "description": "Your current mailing address",
+      "fields": ["street_address", "city", "county", "state", "zip_code"]
+    },
+    {
+      "id": "ucc",
+      "title": "UCC Filing Information",
+      "description": "Your existing UCC-1 filing details",
+      "fields": ["ucc_filing_number", "ucc_filing_state", "registered_mail_number"]
+    },
+    {
+      "id": "financial",
+      "title": "Financial Routing",
+      "description": "DTC routing information for Treasury",
+      "fields": ["dtc_routing_number", "dtc_account_number"]
+    },
+    {
+      "id": "dates",
+      "title": "Document Dates",
+      "description": "Execution dates for your package",
+      "fields": ["document_date"]
+    }
+  ]
+}

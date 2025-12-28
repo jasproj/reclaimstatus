@@ -1,0 +1,24 @@
+# Treasury Package Generator - Python Dependencies
+
+# Document Processing
+python-docx>=0.8.11
+pypdf>=3.17.0
+reportlab>=4.0.0
+
+# PDF Manipulation
+pdfplumber>=0.10.0
+
+# Security
+cryptography>=41.0.0
+
+# API Framework (if using Python backend)
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+
+# Development
+pytest>=7.4.0
+black>=23.0.0

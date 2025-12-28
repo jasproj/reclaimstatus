@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Treasury Package Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .gradient-bg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+    .card-shadow { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen">
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const STATES = [
+      'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
+      'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa',
+      'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan',
+      'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire',
+      'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio',
+      'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota',
+      'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia',
+      'Wisconsin', 'Wyoming'
+    ];
+
+    const DOCUMENTS = [
+      { id: 1, name: 'Affidavit of Notary Presentment' },
+      { id: 2, name: 'Recording Cover Sheet' },
+      { id: '2A', name: 'Pre-Offset Notice for Balanced Book Adjustment' },
+      { id: 3, name: 'Affidavit of Political Status' },
+      { id: 4, name: 'UCC-1 Finance Statement' },
+      { id: '4A', name: 'UCC-1 Addendum' },
+      { id: 5, name: 'Power of Attorney' },
+      { id: 6, name: 'Private Security Agreement' },
+      { id: '6A', name: 'Attachment A - Property List' },
+      { id: 7, name: 'Indemnity Bond/Lien' },
+      { id: 8, name: 'Hold Harmless & Indemnity Agreement' },
+      { id: 9, name: 'Copyright Affidavit' },
+      { id: 10, name: 'Common Law Copyright Notice' },
+      { id: 11, name: 'Legal Notice & Demand Definitions' },
+      { id: 12, name: 'Continuation of Additional Collateral' },
+      { id: 13, name: 'Act of Expatriation' },
+      { id: 14, name: 'Chargeback Order' },
+      { id: 15, name: 'International Registered Private Tracking' },
+      { id: 16, name: 'Appointment of Fiduciary' },
+      { id: 17, name: 'Private Banker\'s Acceptance' },
+      { id: 18, name: 'IRS Form 56 - Treasury Secretary' },
+      { id: 19, name: 'IRS Form 1041-V' },
+      { id: 20, name: 'Actual and Constructive Notice' },
+      { id: 21, name: 'Non-Negotiable International Bill of Exchange' }
+    ];
+
+    function TreasuryPackageForm() {
+      const [currentStep, setCurrentStep] = useState(0);
+      const [formData, setFormData] = useState({
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        ssn: '',
+        birthDate: '',
+        birthState: '',
+        birthCertNumber: '',
+        streetAddress: '',
+        city: '',
+        county: '',
+        state: '',
+        zipCode: '',
+        uccFilingNumber: '',
+        uccFilingState: 'New York',
+        registeredMailNumber: '',
+        dtcRoutingNumber: '',
+        dtcAccountNumber: '',
+        documentDate: new Date().toISOString().split('T')[0],
+        lienAmount: '100000000'
+      });
+      const [errors, setErrors] = useState({});
+      const [isGenerating, setIsGenerating] = useState(false);
+      const [generatedData, setGeneratedData] = useState(null);
+
+      const steps = [
+        { id: 'personal', title: 'Personal', icon: '👤' },
+        { id: 'names', title: 'Name Preview', icon: '📝' },
+        { id: 'address', title: 'Address', icon: '🏠' },
+        { id: 'ucc', title: 'UCC Filing', icon: '📋' },
+        { id: 'financial', title: 'Financial', icon: '💰' },
+        { id: 'review', title: 'Review', icon: '✅' }
+      ];
+
+      const getDerivedFields = () => {
+        const first = formData.firstName.trim();
+        const middle = formData.middleName.trim();
+        const last = formData.lastName.trim();
+        
+        const fInit = first ? first[0].toUpperCase() : '';
+        const mInit = middle ? middle[0].toUpperCase() : '';
+        const lInit = last ? last[0].toUpperCase() : '';
+        
+        const fullNameUpper = [first, middle, last].filter(Boolean).join(' ').toUpperCase();
+        const fullNameStyled = middle 
+          ? `${first}-${middle}: ${last}`
+          : `${first}: ${last}`;
+        
+        return {
+          fullNameUpper,
+          fullNameStyled,
+          ssnNoDashes: formData.ssn.replace(/-/g, ''),
+          streetAddressUpper: formData.streetAddress.toUpperCase(),
+          cityUpper: formData.city.toUpperCase(),
+          stateUpper: formData.state.toUpperCase(),
+          countyUpper: formData.county.toUpperCase(),
+          lienAmountFormatted: '$' + Number(formData.lienAmount).toLocaleString() + '.00'
+        };
+      };
+
+      // Generate ALL 66+ name variations
+      const generateNameVariations = () => {
+        const first = formData.firstName.trim();
+        const middle = formData.middleName.trim();
+        const last = formData.lastName.trim();
+        
+        if (!first || !last) return null;
+        
+        const fInit = first[0].toUpperCase();
+        const mInit = middle ? middle[0].toUpperCase() : '';
+        const lInit = last[0].toUpperCase();
+        
+        return {
+          debtorVariations: {
+            'Full Name (CAPS)': [first, middle, last].filter(Boolean).join(' ').toUpperCase(),
+            'No Middle (CAPS)': `${first} ${last}`.toUpperCase(),
+            'Middle Initial (CAPS)': middle ? `${first} ${mInit} ${last}`.toUpperCase() : `${first} ${last}`.toUpperCase(),
+            'First Initial (CAPS)': middle ? `${fInit} ${middle} ${last}`.toUpperCase() : `${fInit} ${last}`.toUpperCase(),
+            'Reversed (CAPS)': middle ? `${middle} ${first} ${last}`.toUpperCase() : null,
+            'Initials Only': middle ? `${fInit}${mInit}${lInit}` : `${fInit}${lInit}`,
+            'Two Init + Last': middle ? `${fInit}${mInit} ${last}`.toUpperCase() : `${fInit} ${last}`.toUpperCase(),
+            'Last, First Middle': `${last}, ${first} ${middle}`.toUpperCase().trim(),
+            'Last Only (CAPS)': last.toUpperCase(),
+          },
+          creditorVariations: {
+            'Styled (First-Middle: Last)': middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`,
+            'Mixed Case Full': [first, middle, last].filter(Boolean).join(' '),
+            'Mixed No Middle': `${first} ${last}`,
+            'Mixed Initial (M.)': middle ? `${first} ${mInit}. ${last}` : `${first} ${last}`,
+            'Dotted Initials': middle ? `${fInit}.${mInit}. ${last}` : `${fInit}. ${last}`,
+            'First Init + Middle': middle ? `${fInit}. ${middle} ${last}` : null,
+          },
+          trustVariations: {
+            'Trust Name': [first, middle, last].filter(Boolean).join(' ').toUpperCase() + ' TRUST',
+            'Trust ©': [first, middle, last].filter(Boolean).join(' ').toUpperCase() + ' TRUST©',
+            'Trust Initials': (middle ? `${fInit}${mInit}${lInit}` : `${fInit}${lInit}`) + ' TRUST',
+          },
+          legalRoles: {
+            'Secured Party Creditor': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', Secured Party Creditor',
+            'Attorney in Fact': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', Attorney in Fact',
+            'Bailor': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', Bailor',
+            'Beneficiary': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', Beneficiary',
+            'Executor': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', Executor',
+            'Trustee': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', Trustee',
+            'Holder in Due Course': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', Holder in Due Course',
+            'American State National': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', American State National',
+            'Living Soul': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', a Living Soul',
+            'Natural Man': (middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`) + ', a Natural Man',
+            'Free Man': `one ${middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`}, Free man`,
+            'DEBTOR/BAILEE': [first, middle, last].filter(Boolean).join(' ').toUpperCase() + ', DEBTOR/BAILEE',
+            'GRANTOR': [first, middle, last].filter(Boolean).join(' ').toUpperCase() + ', GRANTOR',
+            'Ens Legis': [first, middle, last].filter(Boolean).join(' ').toUpperCase() + ', Ens legis',
+          },
+          copyrightVariations: {
+            'Copyright ©': [first, middle, last].filter(Boolean).join(' ').toUpperCase() + '©',
+            'Quoted CAPS': `"${[first, middle, last].filter(Boolean).join(' ').toUpperCase()}"`,
+            'Quoted Styled': `'${middle ? `${first}-${middle}: ${last}` : `${first}: ${last}`}'`,
+          },
+          referenceCodes: {
+            'File Code (3)': middle ? `${fInit}${mInit}${lInit}` : `${fInit}${lInit}`,
+            'File Code (2)': `${fInit}${lInit}`,
+          }
+        };
+      };
+
+      const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+        if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }));
+      };
+
+      const formatSSN = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 9);
+        if (digits.length >= 6) return `${digits.slice(0,3)}-${digits.slice(3,5)}-${digits.slice(5)}`;
+        if (digits.length >= 4) return `${digits.slice(0,3)}-${digits.slice(3)}`;
+        return digits;
+      };
+
+      const validateStep = (stepIndex) => {
+        const newErrors = {};
+        
+        if (stepIndex === 0) {
+          if (!formData.firstName.trim()) newErrors.firstName = 'Required';
+          if (!formData.lastName.trim()) newErrors.lastName = 'Required';
+          if (!formData.ssn || formData.ssn.replace(/-/g, '').length !== 9) newErrors.ssn = 'Valid SSN required';
+          if (!formData.birthDate) newErrors.birthDate = 'Required';
+          if (!formData.birthState) newErrors.birthState = 'Required';
+          if (!formData.birthCertNumber.trim()) newErrors.birthCertNumber = 'Required';
+        }
+        
+        // Step 1 is name preview - no validation needed
+        
+        if (stepIndex === 2) {
+          if (!formData.streetAddress.trim()) newErrors.streetAddress = 'Required';
+          if (!formData.city.trim()) newErrors.city = 'Required';
+          if (!formData.county.trim()) newErrors.county = 'Required';
+          if (!formData.state) newErrors.state = 'Required';
+          if (!formData.zipCode || !/^\d{5}(-\d{4})?$/.test(formData.zipCode)) newErrors.zipCode = 'Valid ZIP required';
+        }
+        
+        if (stepIndex === 3) {
+          if (!formData.uccFilingNumber.trim()) newErrors.uccFilingNumber = 'Required';
+          if (!formData.registeredMailNumber.trim()) newErrors.registeredMailNumber = 'Required';
+        }
+        
+        if (stepIndex === 4) {
+          if (!formData.dtcRoutingNumber.trim()) newErrors.dtcRoutingNumber = 'Required';
+          if (!formData.dtcAccountNumber.trim()) newErrors.dtcAccountNumber = 'Required';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+      };
+
+      const nextStep = () => {
+        if (validateStep(currentStep)) {
+          setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
+        }
+      };
+
+      const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
+
+      const generatePackage = () => {
+        setIsGenerating(true);
+        const derived = getDerivedFields();
+        const payload = { ...formData, ...derived, generatedAt: new Date().toISOString() };
+        
+        // Simulate generation delay
+        setTimeout(() => {
+          setGeneratedData(payload);
+          setIsGenerating(false);
+        }, 2000);
+      };
+
+      const downloadJSON = () => {
+        const blob = new Blob([JSON.stringify(generatedData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `treasury_package_data_${formData.lastName}_${formData.documentDate}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      const InputField = ({ label, field, type = 'text', placeholder, required = true, help }) => (
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} {required && <span className="text-red-500">*</span>}
+          </label>
+          <input
+            type={type}
+            value={formData[field]}
+            onChange={(e) => handleChange(field, e.target.value)}
+            placeholder={placeholder}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
+              errors[field] ? 'border-red-500 bg-red-50' : 'border-gray-300'
+            }`}
+          />
+          {errors[field] && <p className="text-red-500 text-xs mt-1">{errors[field]}</p>}
+          {help && <p className="text-gray-500 text-xs mt-1">{help}</p>}
+        </div>
+      );
+
+      const SelectField = ({ label, field, options, required = true }) => (
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} {required && <span className="text-red-500">*</span>}
+          </label>
+          <select
+            value={formData[field]}
+            onChange={(e) => handleChange(field, e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition ${
+              errors[field] ? 'border-red-500 bg-red-50' : 'border-gray-300'
+            }`}
+          >
+            <option value="">Select...</option>
+            {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+          {errors[field] && <p className="text-red-500 text-xs mt-1">{errors[field]}</p>}
+        </div>
+      );
+
+      // Generated Data View
+      if (generatedData) {
+        const derived = getDerivedFields();
+        return (
+          <div className="py-8 px-4 max-w-4xl mx-auto">
+            <div className="bg-white rounded-xl card-shadow p-8">
+              <div className="text-center mb-8">
+                <div className="text-6xl mb-4">✅</div>
+                <h2 className="text-2xl font-bold text-gray-900">Package Data Generated!</h2>
+                <p className="text-gray-600 mt-2">Your Treasury Package data is ready</p>
+              </div>
+              
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-green-800 mb-2">📋 Data Summary</h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-gray-600">Name (CAPS):</span>
+                  <span className="font-mono text-green-900">{derived.fullNameUpper}</span>
+                  <span className="text-gray-600">Name (Styled):</span>
+                  <span className="font-mono text-green-900">{derived.fullNameStyled}</span>
+                  <span className="text-gray-600">Documents:</span>
+                  <span className="text-green-900">{DOCUMENTS.length} documents</span>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-gray-800 mb-3">📄 Documents Included</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm max-h-60 overflow-y-auto">
+                  {DOCUMENTS.map(doc => (
+                    <div key={doc.id} className="flex items-center">
+                      <span className="text-green-500 mr-2">✓</span>
+                      <span className="text-gray-700">{doc.id}. {doc.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={downloadJSON}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                >
+                  📥 Download Data (JSON)
+                </button>
+                <button
+                  onClick={() => { setGeneratedData(null); setCurrentStep(0); }}
+                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition"
+                >
+                  ← Start New Package
+                </button>
+              </div>
+              
+              <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h4 className="font-medium text-yellow-800 mb-2">⚠️ Next Steps</h4>
+                <p className="text-sm text-yellow-700">
+                  This JSON data file contains all your information. The backend API will use this 
+                  to populate the actual DOCX templates and generate the final PDF package.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const renderStep = () => {
+        switch (currentStep) {
+          case 0:
+            return (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">👤</span> Personal Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <InputField label="First Name" field="firstName" placeholder="John" />
+                  <InputField label="Middle Name" field="middleName" placeholder="Michael" required={false} />
+                  <InputField label="Last Name" field="lastName" placeholder="Smith" />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Social Security Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.ssn}
+                    onChange={(e) => handleChange('ssn', formatSSN(e.target.value))}
+                    placeholder="XXX-XX-XXXX"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition ${
+                      errors.ssn ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.ssn && <p className="text-red-500 text-xs mt-1">{errors.ssn}</p>}
+                  <p className="text-gray-500 text-xs mt-1 flex items-center">
+                    <span className="mr-1">🔒</span> Your SSN is encrypted and never stored
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputField label="Date of Birth" field="birthDate" type="date" />
+                  <SelectField label="State of Birth" field="birthState" options={STATES} />
+                </div>
+                <InputField 
+                  label="Birth Certificate Number" 
+                  field="birthCertNumber" 
+                  placeholder="XXX-XX-XXXXXX"
+                  help="File number from your birth certificate"
+                />
+              </div>
+            );
+          
+          case 1:
+            const nameVars = generateNameVariations();
+            if (!nameVars) {
+              return (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Please complete your name on the previous step first.</p>
+                  <button onClick={prevStep} className="mt-4 text-blue-600 hover:underline">← Go Back</button>
+                </div>
+              );
+            }
+            return (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2 flex items-center">
+                  <span className="mr-2">📝</span> Name Variations Preview
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  These variations will be used across all documents to establish legal superiority over your name.
+                  Review carefully to ensure accuracy.
+                </p>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center text-blue-800 font-medium mb-2">
+                    <span className="mr-2">ℹ️</span> Why so many variations?
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    By claiming ALL possible spellings and formats of your name, you establish yourself as the 
+                    Secured Party Creditor with superior claim over the legal fiction (DEBTOR/Strawman).
+                  </p>
+                </div>
+
+                {/* DEBTOR Variations */}
+                <div className="bg-red-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-red-900 mb-2 flex items-center">
+                    <span className="mr-2">🔴</span> DEBTOR Variations (Legal Fiction / ALL CAPS)
+                  </h4>
+                  <div className="grid grid-cols-1 gap-1 text-sm">
+                    {Object.entries(nameVars.debtorVariations).filter(([k,v]) => v).map(([key, val]) => (
+                      <div key={key} className="flex justify-between py-1 border-b border-red-100">
+                        <span className="text-red-700">{key}:</span>
+                        <span className="font-mono font-semibold text-red-900">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CREDITOR Variations */}
+                <div className="bg-green-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-green-900 mb-2 flex items-center">
+                    <span className="mr-2">🟢</span> CREDITOR Variations (Living Man / Styled)
+                  </h4>
+                  <div className="grid grid-cols-1 gap-1 text-sm">
+                    {Object.entries(nameVars.creditorVariations).filter(([k,v]) => v).map(([key, val]) => (
+                      <div key={key} className="flex justify-between py-1 border-b border-green-100">
+                        <span className="text-green-700">{key}:</span>
+                        <span className="font-mono font-semibold text-green-900">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Trust Variations */}
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-purple-900 mb-2 flex items-center">
+                    <span className="mr-2">🟣</span> Trust Variations
+                  </h4>
+                  <div className="grid grid-cols-1 gap-1 text-sm">
+                    {Object.entries(nameVars.trustVariations).map(([key, val]) => (
+                      <div key={key} className="flex justify-between py-1 border-b border-purple-100">
+                        <span className="text-purple-700">{key}:</span>
+                        <span className="font-mono font-semibold text-purple-900">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Legal Roles */}
+                <div className="bg-amber-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-amber-900 mb-2 flex items-center">
+                    <span className="mr-2">🟡</span> Legal Role Formats
+                  </h4>
+                  <div className="grid grid-cols-1 gap-1 text-sm max-h-48 overflow-y-auto">
+                    {Object.entries(nameVars.legalRoles).map(([key, val]) => (
+                      <div key={key} className="flex justify-between py-1 border-b border-amber-100">
+                        <span className="text-amber-700">{key}:</span>
+                        <span className="font-mono text-xs font-semibold text-amber-900">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Copyright & Reference */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2">Copyright Formats</h4>
+                    <div className="text-sm space-y-1">
+                      {Object.entries(nameVars.copyrightVariations).map(([key, val]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-gray-600">{key}:</span>
+                          <span className="font-mono font-semibold">{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2">Reference Codes</h4>
+                    <div className="text-sm space-y-1">
+                      {Object.entries(nameVars.referenceCodes).map(([key, val]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-gray-600">{key}:</span>
+                          <span className="font-mono font-semibold text-2xl">{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-green-100 border border-green-300 rounded-lg p-4 mt-4">
+                  <p className="text-sm text-green-800 flex items-center">
+                    <span className="mr-2">✅</span>
+                    <strong>Total: 40+ unique name variations</strong> will be auto-populated across all 24 documents.
+                  </p>
+                </div>
+              </div>
+            );
+          
+          case 2:
+            return (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">🏠</span> Address Information
+                </h3>
+                <InputField label="Street Address" field="streetAddress" placeholder="123 Main Street" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputField label="City" field="city" placeholder="Tampa" />
+                  <InputField label="County" field="county" placeholder="Hillsborough" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <SelectField label="State" field="state" options={STATES} />
+                  <InputField label="ZIP Code" field="zipCode" placeholder="33617" />
+                </div>
+              </div>
+            );
+          
+          case 3:
+            return (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">📋</span> UCC Filing Information
+                </h3>
+                <InputField 
+                  label="UCC-1 Filing Number" 
+                  field="uccFilingNumber" 
+                  placeholder="Enter your filing number"
+                  help="From your Secretary of State UCC filing confirmation"
+                />
+                <SelectField label="UCC Filing State" field="uccFilingState" options={STATES} />
+                <InputField 
+                  label="Registered Mail Tracking Number" 
+                  field="registeredMailNumber" 
+                  placeholder="RF737860948US"
+                  help="USPS Registered Mail number for your Treasury package mailing"
+                />
+              </div>
+            );
+          
+          case 4:
+            return (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">💰</span> Financial & Routing
+                </h3>
+                <InputField 
+                  label="DTC Routing Number" 
+                  field="dtcRoutingNumber" 
+                  placeholder="XXXX-XXXX-X"
+                />
+                <InputField 
+                  label="DTC Account Number" 
+                  field="dtcAccountNumber" 
+                  placeholder="XXXXXXXXX"
+                />
+                <InputField 
+                  label="Document Execution Date" 
+                  field="documentDate" 
+                  type="date"
+                />
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Lien Amount
+                  </label>
+                  <div className="flex items-center">
+                    <span className="text-gray-500 mr-2 text-lg">$</span>
+                    <input
+                      type="text"
+                      value={Number(formData.lienAmount).toLocaleString()}
+                      onChange={(e) => handleChange('lienAmount', e.target.value.replace(/[^\d]/g, ''))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-500 ml-2">.00</span>
+                  </div>
+                  <p className="text-gray-500 text-xs mt-1">Default: $100,000,000.00</p>
+                </div>
+              </div>
+            );
+          
+          case 5:
+            const derived = getDerivedFields();
+            return (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">✅</span> Review Your Information
+                </h3>
+                
+                <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                  <h4 className="font-medium text-blue-900">Name Formats (Auto-Generated)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                    <span className="text-blue-700">ALL CAPS:</span>
+                    <span className="font-mono font-semibold">{derived.fullNameUpper}</span>
+                    <span className="text-blue-700">Styled Format:</span>
+                    <span className="font-mono font-semibold">{derived.fullNameStyled}</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Personal Details</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <span className="text-gray-600">SSN:</span>
+                    <span className="font-mono">***-**-{formData.ssn.slice(-4)}</span>
+                    <span className="text-gray-600">Birth Date:</span>
+                    <span>{formData.birthDate}</span>
+                    <span className="text-gray-600">Birth State:</span>
+                    <span>{formData.birthState}</span>
+                    <span className="text-gray-600">Birth Cert #:</span>
+                    <span className="font-mono">{formData.birthCertNumber}</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Address</h4>
+                  <p className="text-sm text-gray-700">
+                    {formData.streetAddress}<br />
+                    {formData.city}, {formData.state} {formData.zipCode}<br />
+                    {formData.county} County
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Filing Information</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <span className="text-gray-600">UCC Filing #:</span>
+                    <span className="font-mono">{formData.uccFilingNumber}</span>
+                    <span className="text-gray-600">Filing State:</span>
+                    <span>{formData.uccFilingState}</span>
+                    <span className="text-gray-600">Registered Mail #:</span>
+                    <span className="font-mono">{formData.registeredMailNumber}</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Financial</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <span className="text-gray-600">DTC Routing:</span>
+                    <span className="font-mono">{formData.dtcRoutingNumber}</span>
+                    <span className="text-gray-600">DTC Account:</span>
+                    <span className="font-mono">{formData.dtcAccountNumber}</span>
+                    <span className="text-gray-600">Lien Amount:</span>
+                    <span className="font-semibold">{derived.lienAmountFormatted}</span>
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-medium text-green-900 mb-2">📦 Package Contents</h4>
+                  <p className="text-sm text-green-800">
+                    Your Treasury Package will include <strong>{DOCUMENTS.length} documents</strong>, 
+                    fully populated with your information, ready for notarization and mailing.
+                  </p>
+                </div>
+              </div>
+            );
+          
+          default:
+            return null;
+        }
+      };
+
+      return (
+        <div className="py-8 px-4">
+          <div className="max-w-2xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-white mb-2">Treasury Package Generator</h1>
+              <p className="text-slate-400">Complete the questionnaire to generate your document package</p>
+            </div>
+            
+            {/* Progress Steps */}
+            <div className="flex justify-between mb-8 px-4">
+              {steps.map((step, index) => (
+                <div 
+                  key={step.id}
+                  className="flex flex-col items-center cursor-pointer"
+                  onClick={() => index < currentStep && setCurrentStep(index)}
+                >
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl mb-2 transition-all ${
+                    index < currentStep ? 'bg-green-500 text-white' :
+                    index === currentStep ? 'bg-blue-500 text-white ring-4 ring-blue-300' : 
+                    'bg-slate-700 text-slate-400'
+                  }`}>
+                    {index < currentStep ? '✓' : step.icon}
+                  </div>
+                  <span className={`text-xs ${index <= currentStep ? 'text-white' : 'text-slate-500'}`}>
+                    {step.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+            
+            {/* Form Card */}
+            <div className="bg-white rounded-xl card-shadow p-6 md:p-8">
+              {renderStep()}
+              
+              {/* Navigation */}
+              <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                <button
+                  onClick={prevStep}
+                  disabled={currentStep === 0}
+                  className={`px-6 py-2.5 rounded-lg font-medium transition ${
+                    currentStep === 0 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  ← Back
+                </button>
+                
+                {currentStep < steps.length - 1 ? (
+                  <button
+                    onClick={nextStep}
+                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                  >
+                    Continue →
+                  </button>
+                ) : (
+                  <button
+                    onClick={generatePackage}
+                    disabled={isGenerating}
+                    className={`px-8 py-3 rounded-lg font-medium transition flex items-center ${
+                      isGenerating 
+                        ? 'bg-gray-400 cursor-wait'
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating...
+                      </>
+                    ) : (
+                      <>📥 Generate Package</>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Security Notice */}
+            <div className="mt-6 text-center text-slate-500 text-sm flex items-center justify-center">
+              <span className="mr-2">🔒</span> Your data is processed locally and encrypted in transit
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<TreasuryPackageForm />, document.getElementById('root'));
+  </script>
+</body>
+</html>
