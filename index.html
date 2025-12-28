@@ -264,15 +264,16 @@
         URL.revokeObjectURL(url);
       };
 
-      const InputField = ({ label, field, type = 'text', placeholder, required = true, help }) => (
+      const renderInput = (label, field, type = 'text', placeholder = '', required = true, help = '') => (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {label} {required && <span className="text-red-500">*</span>}
           </label>
           <input
             type={type}
+            name={field}
             value={formData[field]}
-            onChange={(e) => handleChange(field, e.target.value)}
+            onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
             placeholder={placeholder}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${
               errors[field] ? 'border-red-500 bg-red-50' : 'border-gray-300'
@@ -283,14 +284,15 @@
         </div>
       );
 
-      const SelectField = ({ label, field, options, required = true }) => (
+      const renderSelect = (label, field, options, required = true) => (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {label} {required && <span className="text-red-500">*</span>}
           </label>
           <select
+            name={field}
             value={formData[field]}
-            onChange={(e) => handleChange(field, e.target.value)}
+            onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition ${
               errors[field] ? 'border-red-500 bg-red-50' : 'border-gray-300'
             }`}
@@ -374,9 +376,9 @@
                   <span className="mr-2">👤</span> Personal Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <InputField label="First Name" field="firstName" placeholder="John" />
-                  <InputField label="Middle Name" field="middleName" placeholder="Michael" required={false} />
-                  <InputField label="Last Name" field="lastName" placeholder="Smith" />
+                  {renderInput("First Name", "firstName", "text", "John")}
+                  {renderInput("Middle Name", "middleName", "text", "Michael", false)}
+                  {renderInput("Last Name", "lastName", "text", "Smith")}
                 </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -384,8 +386,9 @@
                   </label>
                   <input
                     type="text"
+                    name="ssn"
                     value={formData.ssn}
-                    onChange={(e) => handleChange('ssn', formatSSN(e.target.value))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, ssn: formatSSN(e.target.value) }))}
                     placeholder="XXX-XX-XXXX"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition ${
                       errors.ssn ? 'border-red-500 bg-red-50' : 'border-gray-300'
@@ -397,15 +400,10 @@
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField label="Date of Birth" field="birthDate" type="date" />
-                  <SelectField label="State of Birth" field="birthState" options={STATES} />
+                  {renderInput("Date of Birth", "birthDate", "date")}
+                  {renderSelect("State of Birth", "birthState", STATES)}
                 </div>
-                <InputField 
-                  label="Birth Certificate Number" 
-                  field="birthCertNumber" 
-                  placeholder="XXX-XX-XXXXXX"
-                  help="File number from your birth certificate"
-                />
+                {renderInput("Birth Certificate Number", "birthCertNumber", "text", "XXX-XX-XXXXXX", true, "File number from your birth certificate")}
               </div>
             );
           
@@ -540,14 +538,14 @@
                 <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                   <span className="mr-2">🏠</span> Address Information
                 </h3>
-                <InputField label="Street Address" field="streetAddress" placeholder="123 Main Street" />
+                {renderInput("Street Address", "streetAddress", "text", "123 Main Street")}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField label="City" field="city" placeholder="Tampa" />
-                  <InputField label="County" field="county" placeholder="Hillsborough" />
+                  {renderInput("City", "city", "text", "Tampa")}
+                  {renderInput("County", "county", "text", "Hillsborough")}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <SelectField label="State" field="state" options={STATES} />
-                  <InputField label="ZIP Code" field="zipCode" placeholder="33617" />
+                  {renderSelect("State", "state", STATES)}
+                  {renderInput("ZIP Code", "zipCode", "text", "33617")}
                 </div>
               </div>
             );
@@ -558,19 +556,9 @@
                 <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                   <span className="mr-2">📋</span> UCC Filing Information
                 </h3>
-                <InputField 
-                  label="UCC-1 Filing Number" 
-                  field="uccFilingNumber" 
-                  placeholder="Enter your filing number"
-                  help="From your Secretary of State UCC filing confirmation"
-                />
-                <SelectField label="UCC Filing State" field="uccFilingState" options={STATES} />
-                <InputField 
-                  label="Registered Mail Tracking Number" 
-                  field="registeredMailNumber" 
-                  placeholder="RF737860948US"
-                  help="USPS Registered Mail number for your Treasury package mailing"
-                />
+                {renderInput("UCC-1 Filing Number", "uccFilingNumber", "text", "Enter your filing number", true, "From your Secretary of State UCC filing confirmation")}
+                {renderSelect("UCC Filing State", "uccFilingState", STATES)}
+                {renderInput("Registered Mail Tracking Number", "registeredMailNumber", "text", "RF737860948US", true, "USPS Registered Mail number for your Treasury package mailing")}
               </div>
             );
           
@@ -580,21 +568,9 @@
                 <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                   <span className="mr-2">💰</span> Financial & Routing
                 </h3>
-                <InputField 
-                  label="DTC Routing Number" 
-                  field="dtcRoutingNumber" 
-                  placeholder="XXXX-XXXX-X"
-                />
-                <InputField 
-                  label="DTC Account Number" 
-                  field="dtcAccountNumber" 
-                  placeholder="XXXXXXXXX"
-                />
-                <InputField 
-                  label="Document Execution Date" 
-                  field="documentDate" 
-                  type="date"
-                />
+                {renderInput("DTC Routing Number", "dtcRoutingNumber", "text", "XXXX-XXXX-X")}
+                {renderInput("DTC Account Number", "dtcAccountNumber", "text", "XXXXXXXXX")}
+                {renderInput("Document Execution Date", "documentDate", "date")}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Lien Amount
@@ -603,8 +579,9 @@
                     <span className="text-gray-500 mr-2 text-lg">$</span>
                     <input
                       type="text"
+                      name="lienAmount"
                       value={Number(formData.lienAmount).toLocaleString()}
-                      onChange={(e) => handleChange('lienAmount', e.target.value.replace(/[^\d]/g, ''))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, lienAmount: e.target.value.replace(/[^\d]/g, '') }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                     <span className="text-gray-500 ml-2">.00</span>
